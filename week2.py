@@ -74,32 +74,28 @@ class Week2Page(Page):
         else:
             self._draw_linked_list(st.session_state.list_data, st.session_state.curr_idx, strategy="previous")
 
-    # ==========================================
-    # 시각화 렌더링 헬퍼 메서드 (HTML/CSS 활용)
-    # ==========================================
-    def _draw_array(self, data, curr_idx):
+def _draw_array(self, data, curr_idx):
         st.write("**[ 배열 메모리 구조 ]** - 연속된 메모리 공간에 할당됨")
+        
         html = "<div style='display: flex; flex-wrap: wrap; gap: 4px; align-items: flex-end;'>"
         for i, val in enumerate(data):
-            # 현재 위치(curr) 하이라이팅
             border_color = "#1E90FF" if i == curr_idx else "#555"
             bg_color = "#1E90FF33" if i == curr_idx else "transparent"
             marker = "<div style='text-align: center; color: #1E90FF; font-weight: bold; margin-bottom: 5px;'>curr &darr;</div>" if i == curr_idx else "<div style='height: 24px;'></div>"
             
-            html += f"""
-            <div style='display: flex; flex-direction: column; align-items: center;'>
-                {marker}
-                <div style='border: 2px solid {border_color}; background-color: {bg_color}; padding: 15px 20px; font-size: 20px; border-radius: 4px; color: white;'>
-                    {val}
-                </div>
-                <div style='font-size: 12px; color: #aaa; margin-top: 5px;'>Index {i}</div>
-            </div>
-            """
+            # 파이썬 코드의 들여쓰기가 HTML 문자열에 들어가지 않도록 라인별로 붙임
+            html += "<div style='display: flex; flex-direction: column; align-items: center;'>"
+            html += marker
+            html += f"<div style='border: 2px solid {border_color}; background-color: {bg_color}; padding: 15px 20px; font-size: 20px; border-radius: 4px; color: white;'>{val}</div>"
+            html += f"<div style='font-size: 12px; color: #aaa; margin-top: 5px;'>Index {i}</div>"
+            html += "</div>"
+            
         html += "</div>"
         st.markdown(html, unsafe_allow_html=True)
 
     def _draw_linked_list(self, data, curr_idx, strategy):
         st.write(f"**[ 연결 리스트 구조 ]** - 포인터 전략: {strategy.capitalize()}")
+        
         html = "<div style='display: flex; flex-wrap: wrap; gap: 15px; align-items: center; padding-top: 30px;'>"
         
         # Head 노드 (더미)
@@ -107,40 +103,34 @@ class Week2Page(Page):
         if strategy == "previous" and curr_idx == 0:
             head_marker = "<div style='position: absolute; top: -30px; left: 50%; transform: translateX(-50%); color: #FF4B4B; font-weight: bold;'>curr &darr;</div>"
             
-        html += f"""
-        <div style='position: relative; display: flex; align-items: center;'>
-            {head_marker}
-            <div style='background-color: #333; padding: 10px 15px; border-radius: 20px; border: 2px solid #555; color: white;'>Head</div>
-            <div style='margin-left: 10px; color: #888;'>&rarr;</div>
-        </div>
-        """
+        html += "<div style='position: relative; display: flex; align-items: center;'>"
+        html += head_marker
+        html += "<div style='background-color: #333; padding: 10px 15px; border-radius: 20px; border: 2px solid #555; color: white;'>Head</div>"
+        html += "<div style='margin-left: 10px; color: #888;'>&rarr;</div>"
+        html += "</div>"
         
         for i, val in enumerate(data):
-            # 포인터 전략에 따른 'curr' 마커 위치 결정
             show_curr = False
-            curr_color = "#1E90FF" # Current는 파란색
+            curr_color = "#1E90FF"
             
             if strategy == "current" and i == curr_idx:
                 show_curr = True
             elif strategy == "previous" and i == curr_idx - 1:
                 show_curr = True
-                curr_color = "#FF4B4B" # Previous는 빨간색으로 구분
+                curr_color = "#FF4B4B"
                 
             marker = f"<div style='position: absolute; top: -30px; left: 50%; transform: translateX(-50%); color: {curr_color}; font-weight: bold;'>curr &darr;</div>" if show_curr else ""
-            
             highlight_border = f"2px solid {curr_color}" if show_curr else "1px solid #555"
             
-            # 노드 렌더링 (데이터 영역 | 포인터 영역)
-            html += f"""
-            <div style='position: relative; display: flex; align-items: center;'>
-                {marker}
-                <div style='display: flex; border: {highlight_border}; border-radius: 4px; overflow: hidden;'>
-                    <div style='padding: 10px 15px; background-color: #262730; color: white;'>{val}</div>
-                    <div style='padding: 10px 10px; background-color: #444; border-left: 1px solid #555; color: #ccc;'>&bull;</div>
-                </div>
-                <div style='margin-left: 10px; color: #888;'>&rarr;</div>
-            </div>
-            """
+            # 노드 렌더링
+            html += "<div style='position: relative; display: flex; align-items: center;'>"
+            html += marker
+            html += f"<div style='display: flex; border: {highlight_border}; border-radius: 4px; overflow: hidden;'>"
+            html += f"<div style='padding: 10px 15px; background-color: #262730; color: white;'>{val}</div>"
+            html += "<div style='padding: 10px 10px; background-color: #444; border-left: 1px solid #555; color: #ccc;'>&bull;</div>"
+            html += "</div>"
+            html += "<div style='margin-left: 10px; color: #888;'>&rarr;</div>"
+            html += "</div>"
             
         # NULL 끝부분
         html += "<div style='color: #aaa; font-weight: bold;'>NULL</div>"
@@ -148,6 +138,5 @@ class Week2Page(Page):
         
         st.markdown(html, unsafe_allow_html=True)
         
-        # 포인터 전략에 따른 교육적 피드백
         st.info(f"💡 **현재 상태 분석:** `Insert`나 `Delete`를 누르면 " + 
                 ("가리키는 노드 그 자체를 조작하기 때문에 단방향 링크에서는 이전 노드의 Next 주소를 변경하기 어렵습니다." if strategy == "current" else "`curr`이 가리키는 노드의 **Next** 공간에 접근하여 쉽게 새로운 노드를 연결하거나 삭제할 수 있습니다."))

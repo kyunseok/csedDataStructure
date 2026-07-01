@@ -1,5 +1,5 @@
 import streamlit as st
-from basePage import Page
+from base_page import Page
 
 class Week2Page(Page):
     def __init__(self):

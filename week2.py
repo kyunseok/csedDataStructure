@@ -74,7 +74,7 @@ class Week2Page(Page):
         else:
             self._draw_linked_list(st.session_state.list_data, st.session_state.curr_idx, strategy="previous")
 
-def _draw_array(self, data, curr_idx):
+    def _draw_array(self, data, curr_idx):
         st.write("**[ 배열 메모리 구조 ]** - 연속된 메모리 공간에 할당됨")
         
         html = "<div style='display: flex; flex-wrap: wrap; gap: 4px; align-items: flex-end;'>"

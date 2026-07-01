@@ -9,7 +9,6 @@ class Week2Page(Page):
         st.title(f"{self.icon} {self.title}")
         st.markdown("---")
         
-        # 탭을 이용한 서브 주제 분리 (우선 List부터 시작)
         tab_list, tab_stack, tab_queue = st.tabs(["List (리스트)", "Stack (스택)", "Queue (큐)"])
         
         with tab_list:
@@ -24,64 +23,131 @@ class Week2Page(Page):
             st.info("추후 구현 예정 구역입니다.")
 
     def _render_list_section(self):
-        st.header("선형 리스트 (Linear List)")
-        st.write("리스트는 순서를 가진 원소들의 집합을 표현하는 가장 기본적인 추상 데이터 타입(ADT)입니다.")
+        st.header("선형 리스트 (Linear List) 시각화 도구")
+        st.write("버튼을 눌러 리스트의 상태를 변경하고, 내부 메모리 구조가 어떻게 변하는지 확인해 보세요.")
         
-        # 1. 기본 기능 ADT 소개
-        st.subheader("1. 리스트의 주요 ADT 연산")
-        col1, col2 = st.columns(2)
-        with col1:
-            st.markdown("""
-            - **`Insert(X, P)`**: 위치 `P`에 원소 `X`를 삽입합니다.
-            - **`Delete(P)`**: 위치 `P`에 있는 원소를 삭제합니다.
-            - **`Locate(X)`**: 원소 `X`가 위치한 인덱스나 포인터를 반환합니다.
-            """)
-        with col2:
-            st.markdown("""
-            - **`Next(P)`**: 현재 위치 `P` 다음의 위치를 반환합니다.
-            - **`Previous(P)`**: 현재 위치 `P` 이전의 위치를 반환합니다.
-            - **`Retrieve(P)`**: 위치 `P`에 있는 원소의 값을 읽습니다.
-            """)
-            
+        # 1. Session State 초기화 (상태 유지를 위함)
+        if 'list_data' not in st.session_state:
+            st.session_state.list_data = [12, 45, 78]
+        if 'curr_idx' not in st.session_state:
+            st.session_state.curr_idx = 0
+
+        # 2. 제어판 (Controls)
+        st.markdown("### 🎛️ 리스트 컨트롤")
+        col_btn1, col_btn2, col_input, col_btn3, col_btn4 = st.columns([1, 1, 2, 1, 1])
+        
+        with col_btn1:
+            if st.button("⬅️ Previous"):
+                st.session_state.curr_idx = max(0, st.session_state.curr_idx - 1)
+        with col_btn2:
+            if st.button("Next ➡️"):
+                st.session_state.curr_idx = min(len(st.session_state.list_data) - 1, st.session_state.curr_idx + 1)
+        
+        with col_input:
+            new_val = st.text_input("삽입할 값", value="99", label_visibility="collapsed")
+        
+        with col_btn3:
+            if st.button("➕ Insert"):
+                st.session_state.list_data.insert(st.session_state.curr_idx, new_val)
+        with col_btn4:
+            if st.button("🗑️ Delete") and st.session_state.list_data:
+                st.session_state.list_data.pop(st.session_state.curr_idx)
+                # 삭제 후 인덱스 초과 방지
+                st.session_state.curr_idx = min(st.session_state.curr_idx, max(0, len(st.session_state.list_data) - 1))
+
         st.markdown("---")
         
-        # 2. 구현 방식 선택 및 개념 설명
-        st.subheader("2. 리스트의 구현 방법 비교")
-        impl_type = st.selectbox(
-            "구현 방식을 선택하여 특징을 확인하세요:",
-            ["Array-based (배열 기반)", "Pointer-based (포인터 기반)"]
+        # 3. 구현 방식 선택 및 렌더링
+        st.markdown("### 🖥️ 시각화 화면")
+        impl_type = st.radio(
+            "구현 방식을 선택하세요:",
+            ["Array-based (배열 기반)", "Pointer-based (현재 위치 포인터)", "Pointer-based (이전 위치 포인터)"],
+            horizontal=True
         )
         
+        st.markdown("<br>", unsafe_allow_html=True)
+
         if impl_type == "Array-based (배열 기반)":
-            st.markdown("""
-            ### 🔹 배열 기반 리스트 (Sequential List)
-            - **특징**: 연속적인 메모리 공간에 데이터를 순차적으로 저장합니다.
-            - **장점**: 인덱스를 통한 무작위 접근(`Retrieve`)이 $O(1)$로 매우 빠릅니다.
-            - **단점**: 리스트 중간에 데이터를 삽입(`Insert`)하거나 삭제(`Delete`)할 때, 뒤에 있는 연속된 데이터들을 한 칸씩 이동시켜야 하므로 최악의 경우 $O(N)$의 비용이 발생합니다. 크기가 고정된다는 단점도 있습니다.
-            """)
-            
+            self._draw_array(st.session_state.list_data, st.session_state.curr_idx)
+        elif impl_type == "Pointer-based (현재 위치 포인터)":
+            self._draw_linked_list(st.session_state.list_data, st.session_state.curr_idx, strategy="current")
         else:
-            st.markdown("""
-            ### 🔹 포인터 기반 리스트 (Linked List)
-            - **특징**: 데이터와 다음 노드를 가리키는 포인터를 포함하는 '노드(Node)'들이 연결된 형태입니다.
-            - **장점**: 동적으로 크기를 조절할 수 있으며, 삽입/삭제할 위치의 포인터를 알고 있다면 주소 연결만 바꾸면 되므로 $O(1)$에 연산이 가능합니다.
-            - **단점**: 특정 위치를 찾기 위해 헤드 노드부터 순차적으로 탐색해야 하므로 탐색(`Locate`) 비용이 $O(N)$입니다.
-            """)
+            self._draw_linked_list(st.session_state.list_data, st.session_state.curr_idx, strategy="previous")
+
+    # ==========================================
+    # 시각화 렌더링 헬퍼 메서드 (HTML/CSS 활용)
+    # ==========================================
+    def _draw_array(self, data, curr_idx):
+        st.write("**[ 배열 메모리 구조 ]** - 연속된 메모리 공간에 할당됨")
+        html = "<div style='display: flex; flex-wrap: wrap; gap: 4px; align-items: flex-end;'>"
+        for i, val in enumerate(data):
+            # 현재 위치(curr) 하이라이팅
+            border_color = "#1E90FF" if i == curr_idx else "#555"
+            bg_color = "#1E90FF33" if i == curr_idx else "transparent"
+            marker = "<div style='text-align: center; color: #1E90FF; font-weight: bold; margin-bottom: 5px;'>curr &darr;</div>" if i == curr_idx else "<div style='height: 24px;'></div>"
             
-            st.markdown("#### 📍 탐색 포인터의 위치 지정 전략 2가지")
-            pointer_strategy = st.radio(
-                "포인터가 현재 위치를 가리키는 방식의 차이:",
-                ["현재 위치 직접 지칭 (Current Pointer)", "현재 위치의 이전 위치 지칭 (Previous Pointer)"]
-            )
+            html += f"""
+            <div style='display: flex; flex-direction: column; align-items: center;'>
+                {marker}
+                <div style='border: 2px solid {border_color}; background-color: {bg_color}; padding: 15px 20px; font-size: 20px; border-radius: 4px; color: white;'>
+                    {val}
+                </div>
+                <div style='font-size: 12px; color: #aaa; margin-top: 5px;'>Index {i}</div>
+            </div>
+            """
+        html += "</div>"
+        st.markdown(html, unsafe_allow_html=True)
+
+    def _draw_linked_list(self, data, curr_idx, strategy):
+        st.write(f"**[ 연결 리스트 구조 ]** - 포인터 전략: {strategy.capitalize()}")
+        html = "<div style='display: flex; flex-wrap: wrap; gap: 15px; align-items: center; padding-top: 30px;'>"
+        
+        # Head 노드 (더미)
+        head_marker = ""
+        if strategy == "previous" and curr_idx == 0:
+            head_marker = "<div style='position: absolute; top: -30px; left: 50%; transform: translateX(-50%); color: #FF4B4B; font-weight: bold;'>curr &darr;</div>"
             
-            if pointer_strategy == "현재 위치 직접 지칭 (Current Pointer)":
-                st.markdown("""
-                - **개념**: `curr` 포인터가 작업 대상이 되는 노드를 **직접** 가리킵니다.
-                - **특징**: 현재 노드의 데이터를 읽거나 탐색할 때는 직관적입니다.
-                - **한계**: 단방향 연결 리스트(Singly Linked List)에서 현재 위치에 새로운 노드를 삽입하거나 현재 노드를 삭제하려면 **'이전 노드'의 포인터 링크를 수정**해야 합니다. 따라서 `Previous` 연산이 동반되거나 처음부터 다시 탐색해야 하는 비효율성이 존재합니다.
-                """)
-            else:
-                st.markdown("""
-                - **개념**: `curr` 포인터가 실제 작업 대상 노드의 **바로 직전(Previous) 노드**를 가리킵니다.
-                - **특징**: 단방향 연결 리스트의 태생적 한계를 극복하기 위해 자주 쓰입니다. `curr`이 가리키는 노드의 `next` 공간을 대상으로 삽입/삭제를 수행하므로, 별도의 역방향 탐색 없이 즉시 링크 구조를 재조정할 수 있어 구현이 매우 매끄러워집니다. 보통 첫 번째 노드 처리를 쉽게 하기 위해 **더미 헤드 노드(Dummy Head Node)**와 함께 조합됩니다.
-                """)
+        html += f"""
+        <div style='position: relative; display: flex; align-items: center;'>
+            {head_marker}
+            <div style='background-color: #333; padding: 10px 15px; border-radius: 20px; border: 2px solid #555; color: white;'>Head</div>
+            <div style='margin-left: 10px; color: #888;'>&rarr;</div>
+        </div>
+        """
+        
+        for i, val in enumerate(data):
+            # 포인터 전략에 따른 'curr' 마커 위치 결정
+            show_curr = False
+            curr_color = "#1E90FF" # Current는 파란색
+            
+            if strategy == "current" and i == curr_idx:
+                show_curr = True
+            elif strategy == "previous" and i == curr_idx - 1:
+                show_curr = True
+                curr_color = "#FF4B4B" # Previous는 빨간색으로 구분
+                
+            marker = f"<div style='position: absolute; top: -30px; left: 50%; transform: translateX(-50%); color: {curr_color}; font-weight: bold;'>curr &darr;</div>" if show_curr else ""
+            
+            highlight_border = f"2px solid {curr_color}" if show_curr else "1px solid #555"
+            
+            # 노드 렌더링 (데이터 영역 | 포인터 영역)
+            html += f"""
+            <div style='position: relative; display: flex; align-items: center;'>
+                {marker}
+                <div style='display: flex; border: {highlight_border}; border-radius: 4px; overflow: hidden;'>
+                    <div style='padding: 10px 15px; background-color: #262730; color: white;'>{val}</div>
+                    <div style='padding: 10px 10px; background-color: #444; border-left: 1px solid #555; color: #ccc;'>&bull;</div>
+                </div>
+                <div style='margin-left: 10px; color: #888;'>&rarr;</div>
+            </div>
+            """
+            
+        # NULL 끝부분
+        html += "<div style='color: #aaa; font-weight: bold;'>NULL</div>"
+        html += "</div>"
+        
+        st.markdown(html, unsafe_allow_html=True)
+        
+        # 포인터 전략에 따른 교육적 피드백
+        st.info(f"💡 **현재 상태 분석:** `Insert`나 `Delete`를 누르면 " + 
+                ("가리키는 노드 그 자체를 조작하기 때문에 단방향 링크에서는 이전 노드의 Next 주소를 변경하기 어렵습니다." if strategy == "current" else "`curr`이 가리키는 노드의 **Next** 공간에 접근하여 쉽게 새로운 노드를 연결하거나 삭제할 수 있습니다."))

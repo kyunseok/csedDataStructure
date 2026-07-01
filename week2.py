@@ -25,6 +25,17 @@ class Week2Page(Page):
     def _render_list_section(self):
         st.header("선형 리스트 (Linear List) 생성 및 시각화")
         
+        # ==========================================
+        # 🚨 [추가/수정된 부분] Session State 안전 초기화
+        # 화면이 다시 그려질 때마다 변수가 없으면 기본값을 세팅합니다.
+        # ==========================================
+        if 'list_data' not in st.session_state:
+            st.session_state.list_data = []
+        if 'curr_idx' not in st.session_state:
+            st.session_state.curr_idx = 0
+        if 'array_capacity' not in st.session_state:
+            st.session_state.array_capacity = 5  # 기본 Capacity 5로 설정
+        
         # 1. 구현 방식 및 초기 설정 선택
         st.markdown("### 🛠️ 1단계: 리스트 구현 방식 선택 및 초기화")
         col_type, col_config = st.columns(2)
@@ -43,15 +54,17 @@ class Week2Page(Page):
                 use_init = st.checkbox("샘플 데이터와 함께 생성하기", value=True)
                 st.caption("⚠️ 연결 리스트는 동적으로 메모리를 할당하거나, 관리용 더미 노드를 만듭니다.")
 
-        # Session State 기반 데이터 초기화 버튼
-        if st.button("🔄 리스트 새로 생성하기 (Initialize)") or 'list_data' not in st.session_state:
+        # ==========================================
+        # 🚨 [수정된 부분] 새로 생성하기 버튼 로직 간소화
+        # ==========================================
+        if st.button("🔄 리스트 새로 생성하기 (Initialize)"):
             if impl_type == "Array-based (배열 기반)":
                 st.session_state.list_data = [] # 실제 데이터는 비어있음
-                st.session_state.array_capacity = capacity
+                st.session_state.array_capacity = capacity # 사용자가 입력한 capacity 저장
             else:
                 st.session_state.list_data = [12, 45, 78] if use_init else []
             st.session_state.curr_idx = 0
-            st.toast("리스트가 메모리에 초기화되었습니다!")
+            st.rerun() # 상태 업데이트 후 화면을 강제로 즉시 새로고침 (Streamlit 최신 권장)
 
         st.markdown("---")
         
@@ -90,13 +103,18 @@ class Week2Page(Page):
         
         # 3. 상태 시각화 출력
         st.markdown("### 🖥️ 메모리 시각화 화면")
+        
+        # ==========================================
+        # 🚨 [수정된 부분] 안전하게 array_capacity 호출
+        # ==========================================
         if impl_type == "Array-based (배열 기반)":
-            self._draw_array(st.session_state.list_data, st.session_state.curr_idx, st.session_state.array_capacity)
+            # Session State에서 capacity를 안전하게 가져옴
+            safe_capacity = st.session_state.get('array_capacity', 5)
+            self._draw_array(st.session_state.list_data, st.session_state.curr_idx, safe_capacity)
         elif impl_type == "Pointer-based (현재 위치 포인터)":
             self._draw_linked_list(st.session_state.list_data, st.session_state.curr_idx, strategy="current")
         else:
             self._draw_linked_list(st.session_state.list_data, st.session_state.curr_idx, strategy="previous")
-
     # ==========================================
     # HTML/CSS 기반 시각화 헬퍼 (들여쓰기 버그 완벽 제거)
     # ==========================================
